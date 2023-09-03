@@ -1,13 +1,14 @@
+import { BreakpointIndicator } from "@/components/breakpoint-indicator"
+import { Layout } from "@/components/layout"
+import { Toaster } from "@/components/ui/toaster"
 import { Inter as FontSans } from "@next/font/google"
 import { Analytics } from "@vercel/analytics/react"
 import { type Session } from "next-auth"
 import { SessionProvider } from "next-auth/react"
 import { ThemeProvider } from "next-themes"
 import { type AppType } from "next/app"
-import { api } from "~/utils/api"
 import "~/styles/globals.css"
-import { BreakpointIndicator } from "@/components/breakpoint-indicator"
-import { Toaster } from "@/components/ui/toaster"
+import { api } from "~/utils/api"
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -28,7 +29,9 @@ const MyApp: AppType<{ session: Session | null }> = ({
           }
         `}</style>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <Component {...pageProps} />
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
           <Toaster />
         </ThemeProvider>
         <BreakpointIndicator />

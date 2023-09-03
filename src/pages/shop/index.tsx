@@ -1,45 +1,46 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-import { api } from "~/utils/api"
+import { Button } from "@/components/ui/button";
+import { useProductQuery } from "@/hooks/query"
+
+
 
 export default function ShopPage() {
-  return <AccordionDemo />
-}
-
-export function AccordionDemo() {
-  const query = api.product.infiniteFeed.useQuery(
-    {},
-    { getNextPageParam: (lastPage) => lastPage.nextCursor }
-  )
+  const query = useProductQuery()
 
   return (
-    <Accordion type="single" collapsible className="w-full">
-      <AccordionItem value="item-1">
-        <AccordionTrigger>
-          Total products {query.data?.products.length}
-        </AccordionTrigger>
-        <AccordionContent>
-          Yes. It adheres to the WAI-ARIA design pattern.
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="item-2">
-        <AccordionTrigger>Is it styled?</AccordionTrigger>
-        <AccordionContent>
-          Yes. It comes with default styles that matches the other
-          components&apos; aesthetic.
-        </AccordionContent>
-      </AccordionItem>
-      <AccordionItem value="item-3">
-        <AccordionTrigger>Is it animated?</AccordionTrigger>
-        <AccordionContent>
-          Yes. It&apos;s animated by default, but you can disable it if you
-          prefer.
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+    <div className="container">
+      <Button className="mb-20">Create products</Button>
+
+      <ProductsList query={query} />
+    </div>
+  )
+}
+
+function ProductsList({
+  query,
+}: {
+  query: ReturnType<typeof useProductQuery>
+}) {
+  if (query.error) {
+    return <div>{query.error.message}</div>
+  }
+
+  if (query.isLoading) {
+    return <div>Loading...</div>
+  }
+
+  return (
+    <div className="w-full grid grid-cols-3 gap-4">
+      {query.data.products.map((item) =>
+        item ? (
+          <>
+            <div key={item.id}>
+              <div>{item.title}</div>
+              <div>{item.price}</div>
+              <div>{item.description}</div>
+            </div>
+          </>
+        ) : null
+      )}
+    </div>
   )
 }

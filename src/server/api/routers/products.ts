@@ -77,6 +77,52 @@ export const productRouter = createTRPCRouter({
 
       return product
     }),
+  getAll: publicProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).nullish(),
+        cursor: z.string().nullish(),
+        sort: z.enum(["top", "newest", "oldest"]).optional(),
+        time: z.enum(["day", "week"]).optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { cursor } = input
+      const limit = input.limit ?? 10
+      const sort = input.sort ?? "top"
+      const time = input.time ?? "day"
+      const whereClause = {
+        createdAt: {
+          ...(time === "day"
+            ? { gte: new Date(Date.now() - 1000 * 60 * 60 * 24) }
+            : { gte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7) }),
+        },
+        sort: "top",
+      }
+
+      const data = await ctx.prisma.product.findMany({
+        take: limit + 1,
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        // where: whereClause,
+      })
+
+      let nextCursor: typeof cursor | undefined
+
+      if (data.length > limit) {
+        const nextItem = data.pop()
+        if (nextItem != null) {
+          nextCursor = nextItem.id
+        }
+      }
+
+      return {
+        products: data.map((product) => ({
+          ...product,
+        })),
+        nextCursor,
+      }
+    }),
 })
 
 async function getInfiniteproducts({

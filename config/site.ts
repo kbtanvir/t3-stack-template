@@ -1,4 +1,4 @@
-import { NavItem } from "@/types/nav"
+import { type NavItem } from "@/types/nav"
 
 interface SiteConfig {
   name: string
@@ -20,6 +20,10 @@ export const siteConfig: SiteConfig = {
     {
       title: "Home",
       href: "/",
+    },
+    {
+      title: "Shop",
+      href: "/shop",
     },
   ],
   links: {

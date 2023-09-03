@@ -1,10 +1,7 @@
 import { Icons } from "@/components/icons"
-import { Layout } from "@/components/layout"
-import { siteConfig } from "@/config/site"
 import { Router } from "lucide-react"
 import { type NextPage } from "next"
 import { useSession } from "next-auth/react"
-import Head from "next/head"
 import Link from "next/link"
 import { api } from "~/utils/api"
 
@@ -12,12 +9,7 @@ const Home: NextPage = () => {
   const hello = api.example.hello.useQuery({ text: "from tRPC in the server" })
 
   return (
-    <Layout>
-      <Head>
-        <title>{siteConfig.name}</title>
-        <meta name="description" content={siteConfig.description} />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <>
       <main className="flex min-h-screen flex-col items-center justify-center">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight sm:text-[5rem] text-center">
@@ -97,7 +89,7 @@ const Home: NextPage = () => {
           </div>
         </div>
       </main>
-    </Layout>
+    </>
   )
 }
 
