@@ -1,15 +1,16 @@
 import { siteConfig } from "@/config/site"
-import { confirmEmailHtml, confirmEmailAsText } from "@/email/confirm-email"
+import { confirmEmailAsText, confirmEmailHtml } from "@/email/confirm-email"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { type GetServerSidePropsContext } from "next"
 import {
   getServerSession,
-  type NextAuthOptions,
   type DefaultSession,
+  type NextAuthOptions,
 } from "next-auth"
 import EmailProvider from "next-auth/providers/email"
+import GoogleProvider from "next-auth/providers/google"
 import { createTransport } from "nodemailer"
-import { env } from "~/env.mjs"
+import { env } from "~/env/server.mjs"
 import { prisma } from "~/server/db"
 
 /**
@@ -51,8 +52,27 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
+  events: {
+    async createUser(message) {
+      if (message.user.name) return
+      await prisma.user.update({
+        where: {
+          id: message.user.id,
+        },
+        data: {
+          name:
+            message.user.email?.split("@")[0] ||
+            `user-${message.user.id.slice(0, 10)}`,
+        },
+      })
+    },
+  },
   adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+    }),
     EmailProvider({
       server: {
         host: env.EMAIL_SERVER_HOST,
@@ -64,7 +84,7 @@ export const authOptions: NextAuthOptions = {
       },
       from: env.EMAIL_FROM,
       sendVerificationRequest: async ({ identifier, url, provider }) => {
-        const transport = createTransport(provider.server)
+        const transport = createTransport(provider.serve)
         const { host } = new URL(url)
 
         const result = await transport.sendMail({

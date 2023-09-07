@@ -1,23 +1,23 @@
 import { Button } from "@/components/ui/button"
-import { useInfiniteProductQuery } from "@/hooks/query"
+import { useAddFakeQuery, useInfiniteProductQuery } from "@/hooks/query"
 import { type Product } from "@prisma/client"
 import Image from "next/image"
 
 export default function ShopPage() {
   const query = useInfiniteProductQuery()
-  // const deletionQuery = useDeleteAllQuery()
+  const actionQuery = useAddFakeQuery()
 
   return (
     <div className="container">
       <Button className="mb-20">Create products</Button>
-      {/* <Button
+      <Button
         className="mb-20"
         onClick={async () => {
-          await deletionQuery.mutateAsync()
+          await actionQuery.mutateAsync()
         }}
       >
-        Delete all
-      </Button> */}
+        Action
+      </Button>
 
       <ProductFetcher
         query={query}

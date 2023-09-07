@@ -1,6 +1,7 @@
-import { Router } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Loader2, Router } from "lucide-react"
 import { type NextPage } from "next"
-import { useSession } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import Link from "next/link"
 
 const Home: NextPage = () => {
@@ -88,13 +89,21 @@ const Home: NextPage = () => {
 export default Home
 
 const AuthShowcase: React.FC = () => {
-  const { data: sessionData } = useSession()
+  const session = useSession()
 
   return (
     <p className="text-sm">
-      <span className="font-mono bg-slate-200 dark:bg-slate-700 rounded-md px-4 py-2">
+      {/* <p>{session.data?.user?.name ?? "Anonymous"} </p> */}
+      <Button onClick={() => signIn("google")}>
+        {session.status === "loading" ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <span className="mr-2">Sign in with Google</span>
+        )}
+      </Button>
+      {/* <span className="font-mono bg-slate-200 dark:bg-slate-700 rounded-md px-4 py-2">
         {sessionData?.user?.name ?? "Anonymous"}
-      </span>
+      </span> */}
     </p>
   )
 }

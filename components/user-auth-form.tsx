@@ -1,20 +1,21 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { toast } from "@/hooks/use-toast"
-import { cn } from "@/lib/utils"
-import { userAuthSchema } from "@/lib/validations/auth"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 as Spinner } from "lucide-react"
-import { signIn } from "next-auth/react"
-import { useSearchParams } from "next/navigation"
-import * as React from "react"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { userAuthSchema } from "@/lib/validations/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 as Spinner } from "lucide-react";
+import { signIn, useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import * as React from "react";
+import { useForm } from "react-hook-form";
+import type * as z from "zod";
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>
 
 type FormData = z.infer<typeof userAuthSchema>
 
@@ -29,7 +30,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [isGitHubLoading, setIsGitHubLoading] = React.useState<boolean>(false)
   const searchParams = useSearchParams()
-
+  const { data, status } = useSession()
   // Begin the authentication process for the email provider
   async function onSubmit(data: FormData) {
     setIsLoading(true)
@@ -59,10 +60,11 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   return (
     <div className={cn("grid gap-6", className)} {...props}>
       <form onSubmit={handleSubmit(onSubmit)}>
+        {status}
         <div className="grid gap-2">
           <div className="grid gap-1">
             <Label className="sr-only" htmlFor="email">
-              Email
+              Email 
             </Label>
             <Input
               id="email"
@@ -86,6 +88,10 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           </Button>
         </div>
       </form>
+      <Button disabled={isLoading} onClick={() => signIn("google")}>
+        {isLoading && <Spinner className="mr-2 h-4 w-4 animate-spin" />}
+        Signin with google
+      </Button>
     </div>
   )
 }

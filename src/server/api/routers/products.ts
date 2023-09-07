@@ -1,3 +1,4 @@
+import { createRandomProducts } from "@/prisma/data/faker-data"
 import { type Prisma } from "@prisma/client"
 import { type inferAsyncReturnType } from "@trpc/server"
 import { z } from "zod"
@@ -26,6 +27,24 @@ export const productRouter = createTRPCRouter({
   deleteAllProducts: publicProcedure.mutation(async ({ ctx }) => {
     await ctx.prisma.product.deleteMany()
     return true
+  }),
+  addFake100: publicProcedure.mutation(async ({ ctx }) => {
+    const userID = ctx.session?.user.id
+
+    if (userID == null) {
+      throw new Error("You must be logged in to do this")
+    }
+
+    const PRODUCTS = [] as ReturnType<typeof createRandomProducts>[]
+
+    Array.from({ length: 100 }).forEach(() => {
+      PRODUCTS.push(createRandomProducts(userID))
+    })
+    const data = PRODUCTS.map((product) => ({ ...product }))
+
+    await ctx.prisma.product.createMany({
+      data: data,
+    })
   }),
 })
 

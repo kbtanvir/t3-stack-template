@@ -14,3 +14,6 @@ export function useInfiniteProductQuery() {
 export function useDeleteAllQuery() {
   return api.product.deleteAllProducts.useMutation()
 }
+export function useAddFakeQuery() {
+  return api.product.addFake100.useMutation()
+}
