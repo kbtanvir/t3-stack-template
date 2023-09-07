@@ -3,29 +3,12 @@ import { type inferAsyncReturnType } from "@trpc/server"
 import { z } from "zod"
 import {
   createTRPCRouter,
-  protectedProcedure,
   publicProcedure,
   type createTRPCContext,
 } from "~/server/api/trpc"
 
 export const productRouter = createTRPCRouter({
-  infiniteProfileFeed: publicProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-        limit: z.number().optional(),
-        cursor: z.object({ id: z.string(), createdAt: z.date() }).optional(),
-      })
-    )
-    .query(async ({ input: { limit = 10, userId, cursor }, ctx }) => {
-      return await getInfiniteproducts({
-        limit,
-        ctx,
-        cursor,
-        whereClause: { userId },
-      })
-    }),
-  infiniteFeed: publicProcedure
+  infiniteProducts: publicProcedure
     .input(
       z.object({
         onlyFollowing: z.boolean().optional(),
@@ -33,99 +16,20 @@ export const productRouter = createTRPCRouter({
         cursor: z.object({ id: z.string(), createdAt: z.date() }).optional(),
       })
     )
-    .query(
-      async ({ input: { limit = 10, onlyFollowing = false, cursor }, ctx }) => {
-        const currentUserId = ctx.session?.user.id
-        return await getInfiniteproducts({
-          limit,
-          ctx,
-          cursor,
-        })
-      }
-    ),
-  create: protectedProcedure
-    .input(
-      z.object({
-        title: z.string(),
-        price: z.number(),
+    .query(async ({ input: { limit = 10, cursor }, ctx }) => {
+      return await getInfiniteProducts({
+        limit,
+        ctx,
+        cursor,
       })
-    )
-    .mutation(async ({ input, ctx }) => {
-      if (!input.title) {
-        throw new Error("Post must have title text")
-      }
-
-      const trimmedContent = input.title.trim()
-
-      if (trimmedContent.length === 0) {
-        throw new Error("Post must have content text")
-      }
-
-      if (trimmedContent.length > 280) {
-        throw new Error("Post content must be up to 280 characters")
-      }
-
-      const product = await ctx.prisma.product.create({
-        data: {
-          title: input.title,
-          price: input.price,
-          userId: ctx.session.user.id,
-        },
-      })
-
-      void ctx.revalidateSSG?.(`/profiles/${ctx.session.user.id}`)
-
-      return product
     }),
-  getAll: publicProcedure
-    .input(
-      z.object({
-        limit: z.number().min(1).max(100).nullish(),
-        cursor: z.string().nullish(),
-        sort: z.enum(["top", "newest", "oldest"]).optional(),
-        time: z.enum(["day", "week"]).optional(),
-      })
-    )
-    .query(async ({ input, ctx }) => {
-      const { cursor } = input
-      const limit = input.limit ?? 10
-      const sort = input.sort ?? "top"
-      const time = input.time ?? "day"
-      const whereClause = {
-        createdAt: {
-          ...(time === "day"
-            ? { gte: new Date(Date.now() - 1000 * 60 * 60 * 24) }
-            : { gte: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7) }),
-        },
-        sort: "top",
-      }
-
-      const data = await ctx.prisma.product.findMany({
-        take: limit + 1,
-        cursor: cursor ? { id: cursor } : undefined,
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        // where: whereClause,
-      })
-
-      let nextCursor: typeof cursor | undefined
-
-      if (data.length > limit) {
-        const nextItem = data.pop()
-        if (nextItem != null) {
-          nextCursor = nextItem.id
-        }
-      }
-
-      return {
-        products: data.map((product) => ({
-          ...product,
-        })),
-        nextCursor,
-      }
-    }),
+  deleteAllProducts: publicProcedure.mutation(async ({ ctx }) => {
+    await ctx.prisma.product.deleteMany()
+    return true
+  }),
 })
 
-async function getInfiniteproducts({
+async function getInfiniteProducts({
   whereClause,
   ctx,
   limit,
@@ -136,8 +40,6 @@ async function getInfiniteproducts({
   cursor: { id: string; createdAt: Date } | undefined
   ctx: inferAsyncReturnType<typeof createTRPCContext>
 }) {
-  const currentUserId = ctx.session?.user.id
-
   const data = await ctx.prisma.product.findMany({
     take: limit + 1,
     cursor: cursor ? { createdAt_id: cursor } : undefined,
@@ -146,8 +48,10 @@ async function getInfiniteproducts({
     select: {
       id: true,
       title: true,
+      price: true,
+      image: true,
+      description: true,
       createdAt: true,
-
       user: {
         select: { name: true, id: true, image: true },
       },
@@ -155,6 +59,7 @@ async function getInfiniteproducts({
   })
 
   let nextCursor: typeof cursor | undefined
+
   if (data.length > limit) {
     const nextItem = data.pop()
     if (nextItem != null) {
@@ -165,9 +70,7 @@ async function getInfiniteproducts({
   return {
     products: data.map((product) => {
       return {
-        id: product.id,
-        title: product.title,
-        createdAt: product.createdAt,
+        ...product,
       }
     }),
     nextCursor,

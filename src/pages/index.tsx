@@ -1,13 +1,9 @@
-import { Icons } from "@/components/icons"
 import { Router } from "lucide-react"
 import { type NextPage } from "next"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import { api } from "~/utils/api"
 
 const Home: NextPage = () => {
-  const hello = api.example.hello.useQuery({ text: "from tRPC in the server" })
-
   return (
     <>
       <main className="flex min-h-screen flex-col items-center justify-center">
@@ -76,11 +72,7 @@ const Home: NextPage = () => {
                 tRPC
               </span>
               <span className="font-mono bg-slate-200 dark:bg-slate-700 rounded-r-md pr-4 pl-2 py-2">
-                {hello.data ? (
-                  hello.data.greeting
-                ) : (
-                  <Icons.spinner className="h-4 w-4 animate-spin inline-block" />
-                )}
+                <span className="text-blue-500">/api/trpc</span>
               </span>
             </p>
             <div className="my-4">
@@ -98,18 +90,10 @@ export default Home
 const AuthShowcase: React.FC = () => {
   const { data: sessionData } = useSession()
 
-  const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: sessionData?.user !== undefined }
-  )
-
   return (
     <p className="text-sm">
       <span className="font-mono bg-slate-200 dark:bg-slate-700 rounded-md px-4 py-2">
-        {sessionData && (
-          <span>Logged in as &apos;{sessionData.user?.name}&apos;</span>
-        )}
-        {secretMessage && <span> - {secretMessage}</span>}
+        {sessionData?.user?.name ?? "Anonymous"}
       </span>
     </p>
   )

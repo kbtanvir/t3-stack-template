@@ -10,9 +10,10 @@ import { faker } from "@faker-js/faker"
 
 export function createRandomProducts(createdById: string) {
   return {
-    id: faker.string.uuid(),
     title: faker.commerce.productName(),
+    description: faker.commerce.productDescription(),
     price: parseFloat(faker.commerce.price()),
+    image: faker.image.url(),
     userId: createdById,
   }
 }

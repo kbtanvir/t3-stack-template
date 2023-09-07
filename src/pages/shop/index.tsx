@@ -1,25 +1,57 @@
-import { Button } from "@/components/ui/button";
-import { useProductQuery } from "@/hooks/query"
-
-
+import { Button } from "@/components/ui/button"
+import { useInfiniteProductQuery } from "@/hooks/query"
+import { type Product } from "@prisma/client"
+import Image from "next/image"
 
 export default function ShopPage() {
-  const query = useProductQuery()
+  const query = useInfiniteProductQuery()
+  // const deletionQuery = useDeleteAllQuery()
 
   return (
     <div className="container">
       <Button className="mb-20">Create products</Button>
+      {/* <Button
+        className="mb-20"
+        onClick={async () => {
+          await deletionQuery.mutateAsync()
+        }}
+      >
+        Delete all
+      </Button> */}
 
-      <ProductsList query={query} />
+      <ProductFetcher
+        query={query}
+        data={query.data?.pages.map((page) => page.products).flat() ?? []}
+      />
+
+      {query.hasNextPage && (
+        <Button
+          onClick={async () => {
+            await query.fetchNextPage()
+          }}
+        >
+          Loadmore
+        </Button>
+      )}
     </div>
   )
 }
 
-function ProductsList({
+function ProductFetcher({
+  data,
   query,
 }: {
-  query: ReturnType<typeof useProductQuery>
+  data: Partial<Product>[]
+  query: ReturnType<typeof useInfiniteProductQuery>
 }) {
+  // const [d, setdata] = useState<Partial<Product>>([])
+
+  // useEffect(() => {
+  //   const second = fakeProducts
+
+  //   setdata(second)
+  // }, [])
+
   if (query.error) {
     return <div>{query.error.message}</div>
   }
@@ -28,19 +60,50 @@ function ProductsList({
     return <div>Loading...</div>
   }
 
+  if (!query.data) {
+    return <div>No data</div>
+  }
+
   return (
-    <div className="w-full grid grid-cols-3 gap-4">
-      {query.data.products.map((item) =>
-        item ? (
-          <>
-            <div key={item.id}>
-              <div>{item.title}</div>
-              <div>{item.price}</div>
-              <div>{item.description}</div>
-            </div>
-          </>
-        ) : null
-      )}
+    // <div className="w-full grid grid-cols-1 gap-x-12 gap-y-12 items-center sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="w-full overflow-hidden">
+      <div
+        className="grid gap-x-12 gap-y-12 items-center"
+        style={{
+          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+        }}
+      >
+        {/* {fakeProducts.length} */}
+        {/* {JSON.stringify(query.data, null, 2)} */}
+        {data.map((item) => (
+          <ProductItem key={item.id} item={item} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ProductItem({ item }: { item: Partial<Product> }) {
+  return (
+    <div className="grid gap-4 place-items-center ">
+      <div className={"h-64 w-full relative"}>
+        <Image
+          src={item.image as string}
+          alt={item.title as string}
+          layout="fill"
+          className={"image"}
+          objectFit="cover"
+        />
+      </div>
+      {/* <Image
+        src={item.image as string}
+        alt={item.title as string}
+        width="500"
+        height="300"
+      /> */}
+      <h2>{item.title}</h2>
+      <p className="text-teal-200 text-[20px] ">${item.price}</p>
+      <Button className="w-full sm:w-60 ">Add to cart</Button>
     </div>
   )
 }

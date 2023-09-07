@@ -5,17 +5,12 @@ export type QueryParams = {
   time: "day" | "week"
 }
 
-export function useProductQuery(
-  params: QueryParams = {
-    sort: "newest",
-    time: "week",
-  }
-) {
-  return api.product.getAll.useQuery(
-    {
-      sort: params.sort,
-      time: params.time,
-    },
+export function useInfiniteProductQuery() {
+  return api.product.infiniteProducts.useInfiniteQuery(
+    {},
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
   )
+}
+export function useDeleteAllQuery() {
+  return api.product.deleteAllProducts.useMutation()
 }
